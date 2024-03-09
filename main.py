@@ -23,16 +23,19 @@ def update_todo_status(todos, title):
         if item.get('title') == title:
             status = item['status'] 
             item['status'] = 'done' if status == 'on progress' else 'on progress' 
-            return True 
-    return False 
+            return item
+    return {} 
 
+# Dapatkan semua to do
 @app.route('/todos', methods=['GET'])
 def GetAllTodos():
     return todos
 
+# Post to do
 @app.route('/todo', methods=['POST'])
 def GetPostTODO():
     data = request.json
+    data['status'] = data['status'].lower()
 
     if 'title' not in data or 'status' not in data or 'subject' not in data or not data['title'] or not data['status'] or not data['subject']:
         return {'error': 'title, status, and subject fields are required and must not be empty'}, 400
@@ -47,7 +50,8 @@ def GetPostTODO():
     todos.append(data)
     return todos, 201
 
-@app.route('/todo/<string:title>', methods=['DELETE', 'PUT', 'GET'])
+# Delete, Centang, dan Dapatkan to do berdasarkan title
+@app.route('/todo/<string:title>', methods=['DELETE', 'GET', 'PUT'])
 def DeletePutTODO(title):
     if request.method == 'GET':
         result = next(filter(lambda x: x.get('title') == title, todos), None)
@@ -58,11 +62,24 @@ def DeletePutTODO(title):
             return todos
         return todos, 404
     
-    if update_todo_status(todos, title):
-        return todos
+    updated_todo = update_todo_status(todos, title)
+    return updated_todo if updated_todo else updated_todo, 404
 
-    return todos, 404    
+# Dapatkan semua to do berdasarkan filter tertentu
+@app.route('/todo/filter/<string:type>', methods=['GET'])
+def FilterTodoStatus(type):
+    query = request.args.get('q')
+    if not query: return {'error': 'q query parameter is required'}, 400
 
+    if type != 'subject' or type != 'status' or type != 'tags':
+        return {'error': 'todo only filtered by subject, status, and tags'}, 400
+    
+    if type == 'tags':
+        res = [item for item in todos if query in item.get('tags')]
+        return res if res else res, 404
+    
+    res = [item for item in todos if item.get(type) == query]
+    return res if res else res, 404
 
 if __name__ == '__main__':
     app.run(debug=True, port=3000)
