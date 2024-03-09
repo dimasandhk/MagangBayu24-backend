@@ -69,11 +69,12 @@ def DeletePutTODO(title):
 @app.route('/todo/filter/<string:type>', methods=['GET'])
 def FilterTodoStatus(type):
     query = request.args.get('q')
-    if not query: return {'error': 'q query parameter is required'}, 400
 
-    if type != 'subject' or type != 'status' or type != 'tags':
+    if not (type != 'subject' or type != 'status' or type != 'tags'):
         return {'error': 'todo only filtered by subject, status, and tags'}, 400
     
+    if not query: return {'error': 'q query parameter is required'}, 400
+
     if type == 'tags':
         res = [item for item in todos if query in item.get('tags')]
         return res if res else res, 404
