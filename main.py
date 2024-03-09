@@ -26,6 +26,13 @@ def update_todo_status(todos, title):
             return item
     return {} 
 
+def update_todo_tags(todos, title, tags):
+    for item in todos:
+        if item.get('title') == title:
+            item['tags'] += tags
+            return item
+    return {}     
+
 # Dapatkan semua to do
 @app.route('/todos', methods=['GET'])
 def GetAllTodos():
@@ -64,6 +71,17 @@ def DeletePutTODO(title):
     
     updated_todo = update_todo_status(todos, title)
     return updated_todo if updated_todo else updated_todo, 404
+
+def is_array_of_strings(arr):
+    return isinstance(arr, (list, tuple)) and all(isinstance(item, str) for item in arr)
+@app.route('/todo/add-tags/<string:title>', methods=['PUT'])
+def AddTags(title):
+    data = request.json
+    if not is_array_of_strings(data):
+        return {'error': 'please provide an array of tags'}, 400
+
+    res = update_todo_tags(todos, title, data)
+    return res if res else res, 404
 
 # Dapatkan semua to do berdasarkan filter tertentu
 @app.route('/todo/filter/<string:type>', methods=['GET'])
